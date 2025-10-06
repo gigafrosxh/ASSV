@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Datenbank der autorisierten Benutzer
     const authorizedUsers = {
-        '572001': { firstName: 'Maximillian', lastName: 'Amort' },
+        '572001': { firstName: 'Maximilian', lastName: 'Amort' },
         '604004': { firstName: 'Daniel', lastName: 'Naderer' },
         '257005': { firstName: 'Christian', lastName: 'Hahnl' },
         '846002': { firstName: 'Andreas', lastName: 'Klehr' },
@@ -289,6 +289,44 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = authorizedUsers[pin];
         console.log(`- PIN: ${pin} => ${user.firstName} ${user.lastName}`);
     });
+
+    function createDemoButtons() {
+        const demoContainer = document.createElement('div');
+        demoContainer.className = 'demo-buttons';
+        demoContainer.style.marginTop = '1rem';
+        demoContainer.style.padding = '1rem';
+        demoContainer.style.backgroundColor = '#f8f9fa';
+        demoContainer.style.borderRadius = '4px';
+
+        const demoTitle = document.createElement('h4');
+        demoTitle.textContent = 'Demo-Zugänge:';
+        demoTitle.style.marginBottom = '0.5rem';
+        demoTitle.style.color = 'var(--primary-color)';
+
+        demoContainer.appendChild(demoTitle);
+
+        // Für jeden Benutzer einen Demo-Button erstellen
+        Object.keys(authorizedUsers).forEach(pin => {
+            const user = authorizedUsers[pin];
+            const demoBtn = document.createElement('button');
+            demoBtn.textContent = `${user.firstName} ${user.lastName}`;
+            demoBtn.className = 'btn btn-secondary';
+            demoBtn.type = 'button';
+            demoBtn.style.margin = '0.25rem';
+            demoBtn.style.fontSize = '0.85rem';
+
+            demoBtn.addEventListener('click', () => {
+                document.getElementById('pin').value = pin;
+                document.getElementById('firstName').value = user.firstName;
+                document.getElementById('lastName').value = user.lastName;
+                showMessage(`Demo-Daten für ${user.firstName} ${user.lastName} geladen. Klicken Sie auf "Anmelden".`, 'success');
+            });
+
+            demoContainer.appendChild(demoBtn);
+        });
+
+        document.querySelector('.login-form').appendChild(demoContainer);
+    }
 
     // Demo-Buttons erstellen
     createDemoButtons();
