@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anmeldung Bedienstete</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- QuaggaJS für Barcode-Erkennung -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 </head>
 <body>
 <!-- Header mit Logo und Behördenname -->
@@ -43,11 +45,21 @@
             <div class="login-method" id="barcode-method">
                 <h2>Barcode-Scan</h2>
                 <div class="barcode-scanner">
-                    <div class="scanner-placeholder">
-                        <div class="scanner-animation"></div>
-                        <p>Bitte halten Sie Ihren Barcode vor die Kamera</p>
+                    <div id="scanner-container" class="scanner-container">
+                        <div id="interactive" class="viewport"></div>
+                        <div class="scanner-overlay">
+                            <div class="scan-line"></div>
+                            <p>Richten Sie den Barcode in den Rahmen</p>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-secondary" id="start-camera">Kamera aktivieren</button>
+                    <div class="scanner-controls">
+                        <button type="button" class="btn btn-primary" id="start-scanner">Scanner starten</button>
+                        <button type="button" class="btn btn-secondary" id="stop-scanner" style="display: none;">Scanner stoppen</button>
+                        <button type="button" class="btn btn-secondary" id="switch-camera">Kamera wechseln</button>
+                    </div>
+                    <div class="scanner-status" id="scanner-status">
+                        Scanner bereit
+                    </div>
                 </div>
             </div>
 
@@ -88,6 +100,15 @@
         <div class="help-section">
             <h3>Hilfe zur Anmeldung</h3>
             <p>Falls Sie Probleme bei der Anmeldung haben, wenden Sie sich bitte an die IT-Hotline unter +49 (0)30 123456-99 oder senden Sie eine E-Mail an <a href="mailto:it-support@behoerde.de">it-support@behoerde.de</a>.</p>
+            <div class="barcode-types">
+                <h4>Unterstützte Barcode-Formate:</h4>
+                <ul>
+                    <li>CODE_128</li>
+                    <li>EAN_13</li>
+                    <li>UPC_A</li>
+                    <li>CODE_39</li>
+                </ul>
+            </div>
         </div>
     </div>
 </main>
@@ -121,7 +142,7 @@
         </div>
     </div>
     <div class="copyright">
-        <p>&copy; 2023 Abteilungssprecherstellvertreter (ASSV) - Interner Bereich</p>
+        <p>&copy; 2025 Abteilungssprecherstellvertreter (ASSV) - Interner Bereich</p>
     </div>
 </footer>
 

@@ -1,7 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const messageDiv = document.getElementById('message');
-    const startCameraBtn = document.getElementById('start-camera');
+    const startScannerBtn = document.getElementById('start-scanner');
+    const stopScannerBtn = document.getElementById('stop-scanner');
+    const switchCameraBtn = document.getElementById('switch-camera');
+    const scannerStatus = document.getElementById('scanner-status');
+
+    // Scanner-Variablen
+    let scannerActive = false;
+    let currentCamera = 'environment';
+    let stream = null;
 
     // Datenbank der autorisierten Benutzer
     const authorizedUsers = {
@@ -15,167 +23,243 @@ document.addEventListener('DOMContentLoaded', function() {
         '341007': { firstName: 'Felix', lastName: 'Pöckl' }
     };
 
-    // Beispiel-PIN für Demo
-    const examplePIN = '345001';
-
-    // Formular-Submit-Event
+    // Formular-Submit-Event für manuelle Anmeldung
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
         const pin = document.getElementById('pin').value;
-        const firstName = document.getElementById('firstName').value;
-        const lastName = document.getElementById('lastName').value;
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
 
-        messageDiv.style.display = 'none';
-        messageDiv.className = 'message';
+        // Formular validieren
+        if (!pin || !firstName || !lastName) {
+            showMessage('Bitte füllen Sie alle Felder aus.', 'error');
+            return;
+        }
 
-        // Komplexe Validierung
-        if (validateLogin(pin, firstName, lastName)) {
-            showMessage('Anmeldung erfolgreich! Sie werden weitergeleitet...', 'success');
+        // PIN-Validierung - muss 6-stellig sein
+        if (!/^\d{6}$/.test(pin)) {
+            showMessage('Die Personenidentifikationsnummer muss genau 6 Ziffern enthalten.', 'error');
+            return;
+        }
+
+        // Einfache Validierung: Prüfen ob PIN existiert und Name übereinstimmt
+        const isValid = validateSimpleLogin(pin, firstName, lastName);
+
+        if (isValid) {
+            const user = authorizedUsers[pin];
+            showMessage(`Anmeldung erfolgreich! Willkommen ${user.firstName} ${user.lastName}. Sie werden weitergeleitet...`, 'success');
 
             // Weiterleitung zur persönlichen Seite
             setTimeout(function() {
-                window.location.href = `/bediensteten/${pin}/index.html`;
+                // In einer echten Anwendung:
+                window.location.href = `/bediensteten/${pin}`;
+
+                // Für Demo-Zwecke:
+                console.log(`Weiterleitung zu: /bediensteten/${pin}/index.html`);
+                alert(`Erfolgreich angemeldet als ${user.firstName} ${user.lastName} (PIN: ${pin})`);
             }, 2000);
         } else {
-            showMessage('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.', 'error');
+            showMessage('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Personenidentifikationsnummer und Namen.', 'error');
         }
     });
 
-    // Kamera-Button-Event (simuliert)
-    startCameraBtn.addEventListener('click', function() {
-        showMessage('Barcode-Scan wird simuliert... Bitte verwenden Sie stattdessen die manuelle Eingabe.', 'error');
+    // Scanner-Buttons Events
+    startScannerBtn.addEventListener('click', startScanner);
+    stopScannerBtn.addEventListener('click', stopScanner);
+    switchCameraBtn.addEventListener('click', switchCamera);
 
-        // Simulierte Barcode-Erkennung nach 3 Sekunden
-        setTimeout(function() {
-            // Zufälligen Benutzer auswählen für Demo
+    // Scanner-Funktionen
+    async function startScanner() {
+        if (scannerActive) return;
+
+        try {
+            showMessage('Scanner wird initialisiert...', 'warning');
+            scannerStatus.textContent = 'Scanner wird initialisiert...';
+
+            // Kamerazugriff anfordern
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: currentCamera,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            });
+
+            // QuaggaJS Scanner initialisieren
+            await Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: currentCamera
+                    }
+                },
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "upc_reader"
+                    ]
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                }
+            }, function(err) {
+                if (err) {
+                    console.error(err);
+                    showMessage('Scanner-Fehler: ' + err.message, 'error');
+                    scannerStatus.textContent = 'Scanner-Fehler';
+                    return;
+                }
+
+                Quagga.start();
+                scannerActive = true;
+
+                startScannerBtn.style.display = 'none';
+                stopScannerBtn.style.display = 'inline-block';
+
+                showMessage('Scanner bereit. Barcode scannen...', 'success');
+                scannerStatus.textContent = 'Scanner aktiv - Bitte Barcode scannen';
+                scannerStatus.classList.add('scanning');
+            });
+
+            // Barcode-Erkennung
+            Quagga.onDetected(function(result) {
+                if (!scannerActive) return;
+
+                const code = result.codeResult.code;
+                console.log("Barcode erkannt:", code);
+
+                // Barcode validieren und verarbeiten
+                processScannedBarcode(code);
+            });
+
+        } catch (error) {
+            console.error('Kamera-Fehler:', error);
+
+            // Fallback: Scanner-Simulation für Entwicklung ohne Kamera
+            if (error.name === 'NotFoundError' || error.name === 'NotAllowedError') {
+                showMessage('Kamera nicht verfügbar. Scanner-Simulation wird gestartet.', 'warning');
+                startScannerSimulation();
+            } else {
+                showMessage('Kamera-Fehler: ' + error.message, 'error');
+                scannerStatus.textContent = 'Kamera-Fehler';
+            }
+        }
+    }
+
+    // Scanner-Simulation für Entwicklung ohne Kamera
+    function startScannerSimulation() {
+        scannerActive = true;
+
+        startScannerBtn.style.display = 'none';
+        stopScannerBtn.style.display = 'inline-block';
+
+        showMessage('Scanner-Simulation aktiv. Klicken Sie auf "Barcode simulieren".', 'warning');
+        scannerStatus.textContent = 'Scanner-Simulation aktiv';
+        scannerStatus.classList.add('scanning');
+
+        // Simulierten Barcode-Button erstellen
+        const simulateBtn = document.createElement('button');
+        simulateBtn.textContent = 'Barcode simulieren';
+        simulateBtn.className = 'btn btn-secondary';
+        simulateBtn.type = 'button';
+        simulateBtn.style.marginTop = '10px';
+
+        simulateBtn.addEventListener('click', function() {
+            // Zufälligen gültigen Barcode auswählen
             const pins = Object.keys(authorizedUsers);
             const randomPin = pins[Math.floor(Math.random() * pins.length)];
-            const user = authorizedUsers[randomPin];
+            processScannedBarcode(randomPin);
+        });
 
-            // Formular automatisch ausfüllen
-            document.getElementById('pin').value = randomPin;
-            document.getElementById('firstName').value = user.firstName;
-            document.getElementById('lastName').value = user.lastName;
+        document.querySelector('.scanner-controls').appendChild(simulateBtn);
+    }
 
-            showMessage(`Barcode für ${user.firstName} ${user.lastName} erkannt. Bitte klicken Sie auf "Anmelden".`, 'success');
-        }, 3000);
-    });
+    function stopScanner() {
+        if (!scannerActive) return;
 
-    // Validierungsfunktion
-    function validateLogin(pin, firstName, lastName) {
-        // Überprüfung, ob die PIN genau 6 Ziffern enthält
-        if (!/^\d{6}$/.test(pin)) {
-            return false;
+        if (typeof Quagga !== 'undefined' && Quagga.stop) {
+            Quagga.stop();
+        }
+        scannerActive = false;
+
+        // Kamera-Stream stoppen
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
         }
 
-        // Überprüfung, ob der Benutzer in der Datenbank existiert
+        startScannerBtn.style.display = 'inline-block';
+        stopScannerBtn.style.display = 'none';
+
+        scannerStatus.textContent = 'Scanner gestoppt';
+        scannerStatus.classList.remove('scanning');
+        showMessage('Scanner gestoppt', 'warning');
+
+        // Simulierten Button entfernen falls vorhanden
+        const simulateBtn = document.querySelector('[style*="margin-top: 10px"]');
+        if (simulateBtn) {
+            simulateBtn.remove();
+        }
+    }
+
+    function switchCamera() {
+        if (scannerActive) {
+            stopScanner();
+        }
+
+        currentCamera = currentCamera === 'environment' ? 'user' : 'environment';
+        showMessage(`Kamera gewechselt zu: ${currentCamera === 'environment' ? 'Hauptkamera' : 'Frontkamera'}`, 'warning');
+
+        // Scanner mit neuer Kamera neu starten
+        setTimeout(startScanner, 500);
+    }
+
+    function processScannedBarcode(barcode) {
+        // Barcode validieren (6-stellige Nummer erwarten)
+        if (!/^\d{6}$/.test(barcode)) {
+            showMessage('Ungültiger Barcode. Erwartet: 6-stellige Nummer', 'error');
+            return;
+        }
+
+        // Überprüfen ob Benutzer existiert
+        if (!authorizedUsers[barcode]) {
+            showMessage('Unbekannte Personenidentifikationsnummer', 'error');
+            return;
+        }
+
+        // Benutzerdaten ausfüllen
+        const user = authorizedUsers[barcode];
+        document.getElementById('pin').value = barcode;
+        document.getElementById('firstName').value = user.firstName;
+        document.getElementById('lastName').value = user.lastName;
+
+        showMessage(`Barcode für ${user.firstName} ${user.lastName} erkannt. Bitte klicken Sie auf "Anmelden".`, 'success');
+
+        // Scanner automatisch stoppen nach erfolgreichem Scan
+        setTimeout(stopScanner, 3000);
+    }
+
+    // Einfache Validierungsfunktion - prüft nur ob PIN und Name übereinstimmen
+    function validateSimpleLogin(pin, firstName, lastName) {
+        // Überprüfung, ob die PIN in der Datenbank existiert
         if (!authorizedUsers[pin]) {
             return false;
         }
 
         // Überprüfung, ob Vor- und Nachname mit der PIN übereinstimmen
         const user = authorizedUsers[pin];
-        if (user.firstName.toLowerCase() !== firstName.toLowerCase() ||
-            user.lastName.toLowerCase() !== lastName.toLowerCase()) {
-            return false;
-        }
-
-        // Komplexe PIN-Validierung
-        return validatePIN(pin);
-    }
-
-    // Komplexe PIN-Validierung
-    function validatePIN(pin) {
-        // Konvertierung der PIN in ein Array von Ziffern
-        const digits = pin.split('').map(Number);
-
-        // Komplexe Bedingung 1: Die ersten drei Ziffern müssen bestimmte Eigenschaften haben
-        const firstThree = digits.slice(0, 3);
-        const firstThreeSum = firstThree.reduce((a, b) => a + b, 0);
-        const firstThreeProduct = firstThree.reduce((a, b) => a * b, 1);
-
-        // Die Summe der ersten drei Ziffern muss durch 3 teilbar sein
-        // UND das Produkt muss größer als 10 sein
-        if (firstThreeSum % 3 !== 0 || firstThreeProduct <= 10) {
-            return false;
-        }
-
-        // Komplexe Bedingung 2: Die letzten drei Ziffern müssen fortlaufend sein
-        const lastThree = digits.slice(3);
-
-        // Überprüfung, ob die letzten drei Ziffern fortlaufend sind (aufsteigend oder absteigend)
-        const isAscending =
-            lastThree[0] + 1 === lastThree[1] &&
-            lastThree[1] + 1 === lastThree[2];
-
-        const isDescending =
-            lastThree[0] - 1 === lastThree[1] &&
-            lastThree[1] - 1 === lastThree[2];
-
-        if (!isAscending && !isDescending) {
-            return false;
-        }
-
-        // Komplexe Bedingung 3: Die Quersumme der PIN muss bestimmte Eigenschaften haben
-        const digitSum = digits.reduce((a, b) => a + b, 0);
-
-        // Die Quersumme muss eine Primzahl sein
-        if (!isPrime(digitSum)) {
-            return false;
-        }
-
-        // Komplexe Bedingung 4: Die Ziffern an ungeraden Positionen müssen bestimmte Eigenschaften haben
-        const oddPositionDigits = digits.filter((_, index) => (index + 1) % 2 === 1);
-        const oddPositionSum = oddPositionDigits.reduce((a, b) => a + b, 0);
-
-        // Die Summe der Ziffern an ungeraden Positionen muss größer sein als die an geraden Positionen
-        const evenPositionDigits = digits.filter((_, index) => (index + 1) % 2 === 0);
-        const evenPositionSum = evenPositionDigits.reduce((a, b) => a + b, 0);
-
-        if (oddPositionSum <= evenPositionSum) {
-            return false;
-        }
-
-        // Komplexe Bedingung 5: Die PIN darf keine aufeinanderfolgenden gleichen Ziffern enthalten
-        for (let i = 0; i < digits.length - 1; i++) {
-            if (digits[i] === digits[i + 1]) {
-                return false;
-            }
-        }
-
-        // Komplexe Bedingung 6: Die PIN muss bestimmte mathematische Eigenschaften erfüllen
-        // Die Summe der Quadrate der Ziffern muss durch 7 teilbar sein
-        const sumOfSquares = digits.reduce((sum, digit) => sum + digit * digit, 0);
-        if (sumOfSquares % 7 !== 0) {
-            return false;
-        }
-
-        // Komplexe Bedingung 7: Die PIN muss bestimmte Ziffernkombinationen enthalten
-        // Die PIN muss mindestens eine Ziffer größer als 5 und mindestens eine Ziffer kleiner als 3 enthalten
-        const hasDigitGreaterThan5 = digits.some(digit => digit > 5);
-        const hasDigitLessThan3 = digits.some(digit => digit < 3);
-
-        if (!hasDigitGreaterThan5 || !hasDigitLessThan3) {
-            return false;
-        }
-
-        // Wenn alle Bedingungen erfüllt sind, ist die PIN gültig
-        return true;
-    }
-
-    // Hilfsfunktion zur Überprüfung, ob eine Zahl eine Primzahl ist
-    function isPrime(num) {
-        if (num <= 1) return false;
-        if (num <= 3) return true;
-
-        if (num % 2 === 0 || num % 3 === 0) return false;
-
-        for (let i = 5; i * i <= num; i += 6) {
-            if (num % i === 0 || num % (i + 2) === 0) return false;
-        }
-
-        return true;
+        return user.firstName.toLowerCase() === firstName.toLowerCase() &&
+            user.lastName.toLowerCase() === lastName.toLowerCase();
     }
 
     // Nachricht anzeigen
@@ -183,10 +267,29 @@ document.addEventListener('DOMContentLoaded', function() {
         messageDiv.textContent = text;
         messageDiv.className = `message ${type}`;
         messageDiv.style.display = 'block';
+
+        // Nachricht nach 5 Sekunden ausblenden (außer bei Erfolg)
+        if (type !== 'success') {
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
     }
 
-    // Demo: Beispiel-PIN und Name für Testzwecke anzeigen
-    console.log('Demo-Zugangsdaten:');
-    console.log('PIN: 345001 (Beispiel)');
-    console.log('Gültige PINs:', Object.keys(authorizedUsers));
+    // Beim Verlassen der Seite Scanner stoppen
+    window.addEventListener('beforeunload', function() {
+        if (scannerActive) {
+            stopScanner();
+        }
+    });
+
+    // Demo-Informationen in der Konsole
+    console.log('Autorisierte Benutzer:');
+    Object.keys(authorizedUsers).forEach(pin => {
+        const user = authorizedUsers[pin];
+        console.log(`- PIN: ${pin} => ${user.firstName} ${user.lastName}`);
+    });
+
+    // Demo-Buttons erstellen
+    createDemoButtons();
 });

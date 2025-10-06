@@ -8,6 +8,7 @@
     --border-color: #cccccc;
     --error-color: #cc0000;
     --success-color: #008800;
+    --warning-color: #ff8800;
 }
 
 * {
@@ -138,40 +139,79 @@ main {
     text-align: center;
 }
 
-.scanner-placeholder {
+.scanner-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
     background-color: #000;
-    color: white;
-    height: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.viewport {
+    width: 100%;
+    height: 100%;
+}
+
+.scanner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-    position: relative;
-    overflow: hidden;
 }
 
-.scanner-animation {
-    width: 100%;
-    height: 3px;
-    background-color: #00ff00;
-    position: absolute;
-    top: 50%;
-    animation: scan 2s linear infinite;
+.scan-line {
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00ff00, transparent);
+    animation: scan 2s ease-in-out infinite;
+    margin-bottom: 1rem;
 }
 
 @keyframes scan {
-    0% { top: 10%; }
-    50% { top: 90%; }
-    100% { top: 10%; }
+    0% { transform: translateY(-100px); }
+    50% { transform: translateY(100px); }
+    100% { transform: translateY(-100px); }
 }
 
-.scanner-placeholder p {
-    z-index: 1;
+.scanner-overlay p {
+    color: white;
     background-color: rgba(0, 0, 0, 0.7);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.scanner-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.scanner-status {
     padding: 0.5rem;
     border-radius: 4px;
+    background-color: var(--accent-color);
+    font-size: 0.9rem;
+}
+
+.scanner-status.scanning {
+    background-color: #e6ffe6;
+    color: var(--success-color);
+}
+
+.scanner-status.error {
+    background-color: #ffe6e6;
+    color: var(--error-color);
 }
 
 /* Divider */
@@ -261,6 +301,11 @@ main {
     background-color: #5a6268;
 }
 
+.btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
 /* Nachrichten */
 .message {
     margin-top: 1.5rem;
@@ -283,6 +328,13 @@ main {
     display: block;
 }
 
+.warning {
+    background-color: #fff3e6;
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+    display: block;
+}
+
 /* Hilfebereich */
 .help-section {
     margin-top: 2rem;
@@ -298,6 +350,30 @@ main {
 
 .help-section a {
     color: var(--secondary-color);
+}
+
+.barcode-types {
+    margin-top: 1rem;
+}
+
+.barcode-types h4 {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.barcode-types ul {
+    list-style-type: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.barcode-types li {
+    background-color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    font-size: 0.85rem;
 }
 
 /* Footer */
@@ -373,5 +449,33 @@ footer {
 
     .nav-menu {
         flex-direction: column;
+    }
+
+    .scanner-controls {
+        flex-direction: column;
+    }
+
+    .barcode-types ul {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Zusätzliche Stile für Demo-Buttons */
+.demo-buttons {
+    border: 1px solid var(--border-color);
+}
+
+.demo-buttons h4 {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Responsive Anpassungen für Demo-Buttons */
+@media (max-width: 768px) {
+    .demo-buttons .btn {
+        display: block;
+        width: 100%;
+        margin: 0.25rem 0;
     }
 }
