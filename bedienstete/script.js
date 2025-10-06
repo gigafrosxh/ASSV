@@ -289,8 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = authorizedUsers[pin];
         console.log(`- PIN: ${pin} => ${user.firstName} ${user.lastName}`);
     });
-
-    function createDemoButtons() {
+    /*function createDemoButtons() {
         const demoContainer = document.createElement('div');
         demoContainer.className = 'demo-buttons';
         demoContainer.style.marginTop = '1rem';
@@ -317,7 +316,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             demoBtn.addEventListener('click', () => {
                 document.getElementById('pin').value = pin;
-                document.getElementById('firstName').value = user.firstName;
+
+                    document.getElementById('firstName').value = user.firstName;
                 document.getElementById('lastName').value = user.lastName;
                 showMessage(`Demo-Daten für ${user.firstName} ${user.lastName} geladen. Klicken Sie auf "Anmelden".`, 'success');
             });
@@ -329,5 +329,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Demo-Buttons erstellen
-    createDemoButtons();
+    createDemoButtons();*/
 });
