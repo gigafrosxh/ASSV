@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anmeldung Bedienstete</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Header mit Logo und Behördenname -->
+<header>
+    <div class="header-container">
+        <div class="logo-container">
+            <div class="logo">ASSV</div>
+            <div class="department-name">Interner Bereich für Bedienstete</div>
+        </div>
+        <div class="official-seal">
+            <div style="font-style: italic;">Vertraulich</div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+<nav>
+    <div class="nav-container">
+        <ul class="nav-menu">
+            <li><a href="../index.html">Zurück zur Hauptseite</a></li>
+            <li><a href="#help">Hilfe</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Hauptinhalt -->
+<main>
+    <section class="welcome-section">
+        <h1>Anmeldung für Bedienstete</h1>
+        <p>Bitte melden Sie sich mit Ihrer Personenidentifikationsnummer oder per Barcode-Scan an, um auf die internen Ressourcen zuzugreifen.</p>
+    </section>
+
+    <div class="login-container">
+        <div class="login-methods">
+            <!-- Barcode-Scan Option -->
+            <div class="login-method" id="barcode-method">
+                <h2>Barcode-Scan</h2>
+                <div class="barcode-scanner">
+                    <div class="scanner-placeholder">
+                        <div class="scanner-animation"></div>
+                        <p>Bitte halten Sie Ihren Barcode vor die Kamera</p>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="start-camera">Kamera aktivieren</button>
+                </div>
+            </div>
+
+            <!-- Oder-Trennlinie -->
+            <div class="divider">
+                <span>ODER</span>
+            </div>
+
+            <!-- Manuelle Anmeldung -->
+            <div class="login-method" id="manual-method">
+                <h2>Manuelle Anmeldung</h2>
+                <form class="login-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="pin">Personenidentifikationsnummer</label>
+                        <input type="password" id="pin" name="pin" maxlength="6" placeholder="XXXXXX" required>
+                        <small class="form-hint">6-stellige Nummer (Beispiel: 345001)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="firstName">Vorname</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">Nachname</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Anmelden</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Nachrichtenbereich -->
+        <div id="message" class="message"></div>
+
+        <!-- Hilfetext -->
+        <div class="help-section">
+            <h3>Hilfe zur Anmeldung</h3>
+            <p>Falls Sie Probleme bei der Anmeldung haben, wenden Sie sich bitte an die IT-Hotline unter +49 (0)30 123456-99 oder senden Sie eine E-Mail an <a href="mailto:it-support@behoerde.de">it-support@behoerde.de</a>.</p>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3>Kontakt</h3>
+            <ul>
+                <li>IT-Support: +49 (0)30 123456-99</li>
+                <li>ASSV-Büro: +49 (0)30 123456-78</li>
+                <li>E-Mail: support@behoerde.de</li>
+            </ul>
+        </div>
+        <div class="footer-section">
+            <h3>Rechtliches</h3>
+            <ul>
+                <li><a href="#">Datenschutzerklärung</a></li>
+                <li><a href="#">Nutzungsbedingungen</a></li>
+                <li><a href="#">Impressum</a></li>
+            </ul>
+        </div>
+        <div class="footer-section">
+            <h3>Sicherheit</h3>
+            <ul>
+                <li>Letzte Aktualisierung: 24.10.2023</li>
+                <li>Systemversion: 2.4.1</li>
+                <li>Verschlüsselung: AES-256</li>
+            </ul>
+        </div>
+    </div>
+    <div class="copyright">
+        <p>&copy; 2023 Abteilungssprecherstellvertreter (ASSV) - Interner Bereich</p>
+    </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
