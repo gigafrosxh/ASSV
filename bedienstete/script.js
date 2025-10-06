@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Weiterleitung zur persönlichen Seite
             setTimeout(function() {
                 // In einer echten Anwendung:
-                window.location.href = `/bediensteten/${pin}`;
+                window.location.href = `${pin}`;
 
                 // Für Demo-Zwecke:
                 console.log(`Weiterleitung zu: /bediensteten/${pin}/index.html`);
