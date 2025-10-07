@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = authorizedUsers[pin];
         console.log(`- PIN: ${pin} => ${user.firstName} ${user.lastName}`);
     });
-    /*function createDemoButtons() {
+    function createDemoButtons() {
         const demoContainer = document.createElement('div');
         demoContainer.className = 'demo-buttons';
         demoContainer.style.marginTop = '1rem';
@@ -329,5 +329,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Demo-Buttons erstellen
-    createDemoButtons();*/
+    createDemoButtons();
 });
